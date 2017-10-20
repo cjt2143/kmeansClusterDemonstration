@@ -1,0 +1,78 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct 20 17:36:57 2017
+
+@author: Christopher
+"""
+
+from sklearn.datasets.samples_generator import make_blobs
+from sklearn.metrics import pairwise_distances_argmin
+import numpy as np
+from matplotlib import gridspec
+import matplotlib.pyplot as plt
+
+
+X, y_true = make_blobs(n_samples=300, centers=4,
+                       cluster_std=0.60, random_state=0)
+
+rng = np.random.RandomState(42)
+centers = [0, 4] + rng.randn(4, 2)
+
+
+def draw_points(ax, c, factor=1):
+    ax.scatter(X[:, 0], X[:, 1], c=c, cmap='viridis',
+               s=50 * factor, alpha=0.3)
+    
+def draw_centers(ax, centers, factor=1, alpha=1.0):
+    ax.scatter(centers[:, 0], centers[:, 1],
+               c=np.arange(4), cmap='viridis', s=200 * factor,
+               alpha=alpha)
+    ax.scatter(centers[:, 0], centers[:, 1],
+               c='black', s=50 * factor, alpha=alpha)
+
+
+
+plt.plot()
+fig = plt.figure(figsize=(5,5))
+ax0 = plt.subplot()
+
+ax0.text(0.98, 0.98, "Random Initialization", transform=ax0.transAxes,
+         ha='right', va='top', size=16)
+draw_points(ax0, 'gray', factor=2)
+draw_centers(ax0, centers, factor=2)
+
+for i in range(3):
+    plt.plot()
+    plt.figure(figsize=(10,10))
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_size_inches(12, 5)
+    # Assign-step
+    y_pred = pairwise_distances_argmin(X, centers)
+    draw_points(ax1, y_pred)
+    draw_centers(ax1, centers)
+    
+    # Update-step
+    new_centers = np.array([X[y_pred == i].mean(0) for i in range(4)])
+    draw_points(ax2, y_pred)
+    draw_centers(ax2, centers, alpha=0.3)
+    draw_centers(ax2, new_centers)
+    for i in range(4):
+        ax2.annotate('', new_centers[i], centers[i],
+                     arrowprops=dict(arrowstyle='->', linewidth=1))
+        
+    
+    # Finish iteration
+    centers = new_centers
+    ax1.text(0.95, 0.95, "Cluster Assignment" + str(i), transform=ax1.transAxes, ha='right', va='top', size=14)
+    ax2.text(0.95, 0.95, "Update Step", transform=ax2.transAxes, ha='right', va='top', size=14)
+
+
+# Final E-step    
+y_pred = pairwise_distances_argmin(X, centers)
+fig = plt.figure(figsize=(5,5))
+axf = plt.subplot()
+draw_points(axf, y_pred, factor=2)
+draw_centers(axf, centers, factor=2)
+axf.text(0.98, 0.98, "Final Clustering", transform=axf.transAxes,
+         ha='right', va='top', size=16)
+
